@@ -2,6 +2,8 @@ package com.ems.employee_service.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,6 +22,10 @@ uniqueConstraints = @UniqueConstraint(columnNames = "email",name = "uniqueEmailC
 public class Employee {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+    @NotBlank(message = "employee Id is required")
+    @NotEmpty(message = "employee Id is required")
+    @NotNull(message = "employee Id is required")
     private String employeeId;
     @NotBlank(message ="Name is required!")
     private String name;
