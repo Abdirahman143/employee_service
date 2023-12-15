@@ -15,6 +15,7 @@ public class EmployeeResponse {
     private Long id;
     private String employeeId;
     private String email;
+    private String name;
     private String position;
     private String phoneNumber;
     private BigDecimal salary;

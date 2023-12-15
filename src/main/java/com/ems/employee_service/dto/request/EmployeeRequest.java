@@ -14,10 +14,11 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class EmployeeRequest {
     private String employeeId;
+    private String name;
     private String email;
     private String position;
     private String phoneNumber;
     private BigDecimal salary;
-    private LocalDate hireDate;
+    //private LocalDate hireDate;
     private String status;
 }
