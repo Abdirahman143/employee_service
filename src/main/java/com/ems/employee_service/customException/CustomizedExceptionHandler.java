@@ -124,6 +124,7 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntityBuilder.build(err);
     }
 
+
     // handleMissingServletRequestParameter : triggers when there are missing parameters
     @Override
     protected ResponseEntity<Object> handleMissingServletRequestParameter(
@@ -166,19 +167,6 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntityBuilder.build(err);
     }
 
-    // handleResourceNotFoundException : triggers when there is not resource with the specified ID in BDD
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<Object> handleResourceNotFoundException(UserNotFoundException ex) {
-
-        List<String> details = new ArrayList<String>();
-        details.add(ex.getMessage());
-
-        ApiError err = new ApiError(LocalDateTime.now(),HttpStatus.NOT_FOUND, "Resource Not Found" ,details);
-
-        return ResponseEntityBuilder.build(err);
-    }
-
-
 
     // handleNoHandlerFoundException : triggers when the handler method is invalid
     @Override
@@ -210,6 +198,16 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
 
     }
 
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<Object> handleUserNotFoundException(UserNotFoundException ex, WebRequest request) {
+        ApiError apiError = new ApiError(
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND,
+                "Resource Not Found",
+                Collections.singletonList(ex.getMessage())
+        );
+        return ResponseEntityBuilder.build(apiError);
+    }
 
 
 }
