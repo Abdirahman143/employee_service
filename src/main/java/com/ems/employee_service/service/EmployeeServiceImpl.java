@@ -1,18 +1,18 @@
 package com.ems.employee_service.service;
 
+import com.ems.employee_service.customException.UserNotFoundException;
 import com.ems.employee_service.dto.request.EmployeeRequest;
 import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
 import com.ems.employee_service.repository.EmployeeRepository;
 import com.ems.employee_service.service.mapper.EmployeeMapper;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,8 +43,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     //get all the employee
-
-    ResponseEntity<List<EmployeeResponse>>getAllEmployee(){
+@Override
+public ResponseEntity<List<EmployeeResponse>>getAllEmployee(){
         List<Employee> employeeList= employeeRepository.findAll();
         return  new ResponseEntity<>(
                 employeeList.stream().map(EmployeeMapper.INSTANCE::employeeToEmployeeResponse).
@@ -52,6 +52,29 @@ public class EmployeeServiceImpl implements EmployeeService {
                 HttpStatus.FOUND
         );
     }
+//get employeeByEmployeeID
+@Override
+public Optional<EmployeeResponse> getEmployeeById(String empId) throws UserNotFoundException {
+    Optional<Employee> employeeOptional = employeeRepository.findEmployeesByEmployeeId(empId);
+
+    if (!employeeOptional.isPresent()) {
+        throw new UserNotFoundException("Employee ID " + empId + " not found. Please try with a valid ID.");
+    }
+
+    Employee employee = employeeOptional.get();
+    EmployeeResponse employeeResponse = EmployeeResponse.builder()
+            .employeeId(employee.getEmployeeId())
+            .name(employee.getName())
+            .email(employee.getEmail())
+            .position(employee.getPosition())
+            .phoneNumber(employee.getPhoneNumber())
+            .salary(employee.getSalary())
+            .hireDate(employee.getHireDate())
+            .status(employee.getStatus())
+            .build();
+
+    return Optional.of(employeeResponse);
+}
 
 
 
