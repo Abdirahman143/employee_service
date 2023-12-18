@@ -1,6 +1,7 @@
 package com.ems.employee_service.service;
 
 import com.ems.employee_service.customException.UserNotFoundException;
+import com.ems.employee_service.dto.request.EmployeePartialUpdateRequest;
 import com.ems.employee_service.dto.request.EmployeeRequest;
 import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
@@ -76,7 +77,55 @@ public Optional<EmployeeResponse> getEmployeeById(String empId) throws UserNotFo
     return Optional.of(employeeResponse);
 }
 
+    @Override
+    public ResponseEntity<EmployeeResponse> updateEmployee(EmployeeRequest employeeRequest, String employeeId) throws UserNotFoundException {
+        Optional<Employee> employeeOptional = employeeRepository.findEmployeesByEmployeeId(employeeId);
 
+        if (!employeeOptional.isPresent()) {
+            throw new UserNotFoundException("Employee ID " + employeeId + " not found. Please try with a valid ID.");
+        }
+
+        Employee existingEmployee = employeeOptional.get();
+        updateEmployeeDetails(existingEmployee, employeeRequest);
+
+        Employee updatedEmployee = employeeRepository.save(existingEmployee);
+        EmployeeResponse employeeResponse = EmployeeMapper.INSTANCE.employeeToEmployeeResponse(updatedEmployee);
+
+        return new ResponseEntity<>(employeeResponse, HttpStatus.OK);
+    }
+
+    private void updateEmployeeDetails(Employee existingEmployee, EmployeeRequest employeeRequest) {
+        existingEmployee.setEmail(employeeRequest.getEmail());
+        existingEmployee.setName(employeeRequest.getName());
+        existingEmployee.setPosition(employeeRequest.getPosition());
+        existingEmployee.setPhoneNumber(employeeRequest.getPhoneNumber());
+        existingEmployee.setStatus(employeeRequest.getStatus());
+        existingEmployee.setSalary(employeeRequest.getSalary());
+        // Add other fields that need to be updated
+    }
+
+    //partial update
+    @Override
+    public ResponseEntity<EmployeeResponse> updateEmployeePartial(EmployeePartialUpdateRequest updateRequest, String employeeId) throws UserNotFoundException {
+        Optional<Employee> employeeOptional = employeeRepository.findEmployeesByEmployeeId(employeeId);
+
+        if (!employeeOptional.isPresent()) {
+            throw new UserNotFoundException("Employee ID " + employeeId + " not found. Please try with a valid ID.");
+        }
+
+        Employee existingEmployee = employeeOptional.get();
+        if (updateRequest.getEmail() != null) {
+            existingEmployee.setEmail(updateRequest.getEmail());
+        }
+        if (updateRequest.getSalary() != null) {
+            existingEmployee.setSalary(updateRequest.getSalary());
+        }
+
+        Employee updatedEmployee = employeeRepository.save(existingEmployee);
+        EmployeeResponse employeeResponse = EmployeeMapper.INSTANCE.employeeToEmployeeResponse(updatedEmployee);
+
+        return new ResponseEntity<>(employeeResponse, HttpStatus.OK);
+    }
 
 
 }

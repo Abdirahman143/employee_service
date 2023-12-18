@@ -1,6 +1,7 @@
 package com.ems.employee_service.controller;
 
 import com.ems.employee_service.customException.UserNotFoundException;
+import com.ems.employee_service.dto.request.EmployeePartialUpdateRequest;
 import com.ems.employee_service.dto.request.EmployeeRequest;
 import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
@@ -38,4 +39,18 @@ public class EmployeeController {
                                                       String employeeId) throws UserNotFoundException {
         return  employeeService.getEmployeeById(employeeId);
     }
+
+    @PutMapping("/{employeeId}")
+    ResponseEntity<EmployeeResponse>updateEmployee(@RequestBody  EmployeeRequest employeeRequest,
+                                           @PathVariable(value = "employeeId") String employeeId) throws UserNotFoundException {
+        return  employeeService.updateEmployee(employeeRequest,employeeId);
+    }
+
+
+    @PatchMapping("/{employeeId}")
+    public ResponseEntity<EmployeeResponse> updateEmployeePartial(@RequestBody EmployeePartialUpdateRequest updateRequest,
+                                                                  @PathVariable("employeeId") String employeeId) throws UserNotFoundException {
+        return employeeService.updateEmployeePartial(updateRequest, employeeId);
+    }
+
 }

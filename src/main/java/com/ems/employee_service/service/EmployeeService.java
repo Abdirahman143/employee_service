@@ -1,6 +1,7 @@
 package com.ems.employee_service.service;
 
 import com.ems.employee_service.customException.UserNotFoundException;
+import com.ems.employee_service.dto.request.EmployeePartialUpdateRequest;
 import com.ems.employee_service.dto.request.EmployeeRequest;
 import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
@@ -17,4 +18,10 @@ public interface EmployeeService {
 
     //get employeeByEmployeeID
     Optional<EmployeeResponse> getEmployeeById(String empId) throws UserNotFoundException;
+
+    ResponseEntity<EmployeeResponse> updateEmployee(EmployeeRequest employeeRequest, String employeeId) throws UserNotFoundException;
+
+
+    //partial update
+    ResponseEntity<EmployeeResponse> updateEmployeePartial(EmployeePartialUpdateRequest updateRequest, String employeeId) throws UserNotFoundException;
 }
