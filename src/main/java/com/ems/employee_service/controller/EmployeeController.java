@@ -6,6 +6,7 @@ import com.ems.employee_service.dto.request.EmployeeRequest;
 import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
 import com.ems.employee_service.service.EmployeeService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +24,7 @@ public class EmployeeController {
     }
 
     @PostMapping()
-    ResponseEntity<Employee>addEmployee(@RequestBody EmployeeRequest employeeRequest){
+    ResponseEntity<Employee>addEmployee(@Valid @RequestBody EmployeeRequest employeeRequest){
        return employeeService.addEmployee(employeeRequest);
     }
 
