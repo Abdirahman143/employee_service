@@ -42,14 +42,14 @@ public class EmployeeController {
     }
 
     @PutMapping("/{employeeId}")
-    ResponseEntity<EmployeeResponse>updateEmployee(@RequestBody  EmployeeRequest employeeRequest,
+    ResponseEntity<EmployeeResponse>updateEmployee(@Valid @RequestBody  EmployeeRequest employeeRequest,
                                            @PathVariable(value = "employeeId") String employeeId) throws UserNotFoundException {
         return  employeeService.updateEmployee(employeeRequest,employeeId);
     }
 
 
     @PatchMapping("/{employeeId}")
-    public ResponseEntity<EmployeeResponse> updateEmployeePartial(@RequestBody EmployeePartialUpdateRequest updateRequest,
+    public ResponseEntity<EmployeeResponse> updateEmployeePartial(@Valid @RequestBody EmployeePartialUpdateRequest updateRequest,
                                                                   @PathVariable("employeeId") String employeeId) throws UserNotFoundException {
         return employeeService.updateEmployeePartial(updateRequest, employeeId);
     }

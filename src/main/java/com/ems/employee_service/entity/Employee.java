@@ -18,7 +18,10 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "employee_tbl",
-uniqueConstraints = @UniqueConstraint(columnNames = "email",name = "uniqueEmailConstraint")
+uniqueConstraints = {
+        @UniqueConstraint(columnNames = "email", name = "uniqueEmailConstraint"),
+        @UniqueConstraint(columnNames = "employeeId",name = "uniqueEmployeeIdConstraints")
+}
 )
 @Entity
 public class Employee {
@@ -28,6 +31,7 @@ public class Employee {
     @NotBlank(message = "employee Id is required")
     @NotEmpty(message = "employee Id is required")
     @NotNull(message = "employee Id is required")
+    @Column(unique = true)
     private String employeeId;
     @NotBlank(message ="Name is required!")
     private String name;
