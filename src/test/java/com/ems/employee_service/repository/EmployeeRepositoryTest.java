@@ -6,6 +6,8 @@ import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -19,8 +21,8 @@ import static org.assertj.core.api.FactoryBasedNavigableListAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
-@Transactional
 class EmployeeRepositoryTest {
+    static private final Logger logger = LoggerFactory.getLogger(EmployeeRepositoryTest.class);
     @Autowired
     EmployeeRepository employeeRepository;
 Employee employee;
@@ -57,7 +59,10 @@ Employee employee;
 
     @Test
     void testFindEmployeesByEmployeeId_NotFound(){
-        Optional<Employee>NotFoundEmployee = employeeRepository.findEmployeesByEmployeeId("E12349");
-        assertTrue(NotFoundEmployee.isPresent(),"Employee should not be found");
+        Optional<Employee>NotFoundEmployee = employeeRepository.findEmployeesByEmployeeId("E12342");
+        logger.info("checking if it is getting to here");
+        assertFalse(NotFoundEmployee.isPresent(),"Employee should not be found");
+        assertTrue(NotFoundEmployee.isEmpty());
+
     }
 }
