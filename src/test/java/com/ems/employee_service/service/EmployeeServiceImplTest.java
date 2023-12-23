@@ -228,6 +228,7 @@ class EmployeeServiceImplTest {
         //act
         Optional<EmployeeResponse>response = employeeService.getEmployeeById(validEmployee.getEmployeeId());
 
+
         //assert
 
         assertEquals(expectedEmployeeResponse, response.get());
@@ -290,6 +291,50 @@ class EmployeeServiceImplTest {
 
 
     }
+
+
+
+
+
+
+
+
+
+        //assert
+
+        assertEquals(expectedEmployeeResponse, response.get());
+        assertTrue(response.isPresent());
+
+        // Advanced assertions
+        response.ifPresent(employee -> {
+            assertThat(employee).isEqualToComparingFieldByField(expectedEmployeeResponse);
+            // Numeric Assertions
+            assertThat(employee.getSalary()).as("Salary")
+                    .isNotNull()
+                    .isPositive()
+                    .isEqualByComparingTo(new BigDecimal("980000")); // Use isEqualByComparingTo for BigDecimal comparisons
+
+            // Date Assertions - if you have date fields
+//            assertThat(employee.getHireDate()).as("Hire Date")
+//            .isBeforeOrEqualTo(LocalDate.now());
+
+            // String Assertions - for more detailed string checks
+            assertThat(employee.getEmail()).as("Email format")
+                    .contains("@")
+                    .endsWith(".com");
+            // Custom Condition - for domain-specific rules or complex conditions
+            Condition<EmployeeResponse> activeStatusCondition = new Condition<>(
+                    emp -> "Active".equals(emp.getStatus()),
+                    "Employee is in active status"
+            );
+            assertThat(employee).as("Check active status").has(activeStatusCondition);
+
+        });
+        //verify Interaction
+
+        verify(employeeRepository).findEmployeesByEmployeeId(validEmployee.getEmployeeId());
+    }
+
 
 
 
