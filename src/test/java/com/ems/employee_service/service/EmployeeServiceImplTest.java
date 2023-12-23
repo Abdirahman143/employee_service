@@ -1,9 +1,10 @@
 package com.ems.employee_service.service;
 
 import com.ems.employee_service.dto.request.EmployeeRequest;
+import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
 import com.ems.employee_service.repository.EmployeeRepository;
-import com.fasterxml.jackson.databind.util.BeanUtil;
+import com.ems.employee_service.service.mapper.EmployeeMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,17 +15,15 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.util.List;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,6 +37,10 @@ class EmployeeServiceImplTest {
 
     private Employee validEmployee;
     private EmployeeRequest employeeRequest;
+    private EmployeeResponse expectedEmployeeResponse;
+    @Mock
+    private EmployeeMapper employeeMapper;
+
     static private final Logger logger = LoggerFactory.getLogger(EmployeeServiceImplTest.class);
 
     @BeforeEach
@@ -57,13 +60,37 @@ class EmployeeServiceImplTest {
                 salary(new BigDecimal("980000")).
                 status("Active").
                 build();
+        // Setup test data directly
+        validEmployee = Employee.builder()
+                .employeeId("E123490")
+                .email("bashir.abdi@test.com")
+                .name("Bashir")
+                .position("Developer")
+                .phoneNumber("+2547-0000-00")
+                .salary(new BigDecimal("980000"))
+                .status("Active")
+                .build();
+
+        expectedEmployeeResponse = EmployeeResponse.builder()
+                .employeeId("E123490")
+                .email("bashir.abdi@test.com")
+                .name("Bashir")
+                .position("Developer")
+                .phoneNumber("+2547-0000-00")
+                .salary(new BigDecimal("980000"))
+                .status("Active")
+                .build();
+
+
+
         // Using BeanUtils.copyProperties to copy properties from EmployeeDto(EmployeeRequest) to Employee for the test.
-        BeanUtils.copyProperties(employeeRequest, validEmployee);
-        when(employeeRepository.save(any(Employee.class))).thenReturn(validEmployee);
+        //  BeanUtils.copyProperties(employeeRequest, validEmployee);
+
     }
 
     @Test
     void addEmployeeSuccessTest() {
+        when(employeeRepository.save(any(Employee.class))).thenReturn(validEmployee);
         ResponseEntity<Employee> response = employeeService.addEmployee(employeeRequest);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
@@ -114,5 +141,56 @@ class EmployeeServiceImplTest {
         employeeRequest = null;
     }
 
+    @Test
+    void findAll_should_return_employee_list() {
+        List<Employee>mockEmployee = List.of(
+                Employee.builder()
+                        .employeeId("E123491")
+                        .email("ahmed.abdi@test.com")
+                        .name("Ahmed")
+                        .position("Developer")
+                        .phoneNumber("+2547-0000-00")
+                        .salary(new BigDecimal("70000"))
+                        .status("Active")
+                        .build(),
+                Employee.builder()
+                        .employeeId("E123492")
+                        .email("bashir.abdi@test.com")
+                        .name("Bashir")
+                        .position("Developer")
+                        .phoneNumber("+2547-0000-00")
+                        .salary(new BigDecimal("80000"))
+                        .status("Active")
+                        .build(),
+                Employee.builder()
+                        .employeeId("E123495")
+                        .email("fatima.abdi@test.com")
+                        .name("Fatima")
+                        .position("QA")
+                        .phoneNumber("+2547-0040-00")
+                        .salary(new BigDecimal("90000"))
+                        .status("Active")
+                        .build()
+        );
+
+        //arrange
+
+        when(employeeRepository.findAll()).thenReturn(mockEmployee);
+
+
+        //act
+        ResponseEntity<List<EmployeeResponse>>response =employeeService.getAllEmployee();
+
+        //assert
+
+        assertEquals(HttpStatus.FOUND,response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(mockEmployee.size(), response.getBody().size());
+
+
+        // Verify interactions
+        verify(employeeRepository).findAll();
+
+    }
 
 }
