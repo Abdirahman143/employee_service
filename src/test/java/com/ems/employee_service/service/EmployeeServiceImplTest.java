@@ -5,6 +5,7 @@ import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
 import com.ems.employee_service.repository.EmployeeRepository;
 import com.ems.employee_service.service.mapper.EmployeeMapper;
+import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,10 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import org.springframework.http.ResponseEntity;
-
 import java.math.BigDecimal;
 import java.util.List;
-
+import java.util.Optional;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
@@ -78,6 +78,7 @@ class EmployeeServiceImplTest {
                 .position("Developer")
                 .phoneNumber("+2547-0000-00")
                 .salary(new BigDecimal("980000"))
+//                .hireDate(LocalDate.now())
                 .status("Active")
                 .build();
 
@@ -191,6 +192,52 @@ class EmployeeServiceImplTest {
         // Verify interactions
         verify(employeeRepository).findAll();
 
+    }
+
+    //get employee by Id
+    @Test
+    void find_employee_by_id_should_return_success(){
+        //arrange
+
+        when(employeeRepository.findEmployeesByEmployeeId(validEmployee.getEmployeeId())).thenReturn(Optional.of(validEmployee));
+
+
+        //act
+        Optional<EmployeeResponse>response = employeeService.getEmployeeById(validEmployee.getEmployeeId());
+
+        //assert
+
+        assertEquals(expectedEmployeeResponse, response.get());
+        assertTrue(response.isPresent());
+
+        // Advanced assertions
+       response.ifPresent(employee -> {
+            assertThat(employee).isEqualToComparingFieldByField(expectedEmployeeResponse);
+           // Numeric Assertions
+           assertThat(employee.getSalary()).as("Salary")
+                   .isNotNull()
+                   .isPositive()
+                   .isEqualByComparingTo(new BigDecimal("980000")); // Use isEqualByComparingTo for BigDecimal comparisons
+
+           // Date Assertions - if you have date fields
+//            assertThat(employee.getHireDate()).as("Hire Date")
+//            .isBeforeOrEqualTo(LocalDate.now());
+
+           // String Assertions - for more detailed string checks
+           assertThat(employee.getEmail()).as("Email format")
+                   .contains("@")
+                   .endsWith(".com");
+           // Custom Condition - for domain-specific rules or complex conditions
+           Condition<EmployeeResponse> activeStatusCondition = new Condition<>(
+                   emp -> "Active".equals(emp.getStatus()),
+                   "Employee is in active status"
+           );
+           assertThat(employee).as("Check active status").has(activeStatusCondition);
+
+        });
+        //verify Interaction
+
+        verify(employeeRepository).findEmployeesByEmployeeId(validEmployee.getEmployeeId());
     }
 
 }
