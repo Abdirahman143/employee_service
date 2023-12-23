@@ -4,7 +4,10 @@ import com.ems.employee_service.dto.request.EmployeeRequest;
 import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
 import com.ems.employee_service.repository.EmployeeRepository;
+
 import com.ems.employee_service.service.mapper.EmployeeMapper;
+
+import com.fasterxml.jackson.databind.util.BeanUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,12 +18,15 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -37,9 +43,11 @@ class EmployeeServiceImplTest {
 
     private Employee validEmployee;
     private EmployeeRequest employeeRequest;
+
     private EmployeeResponse expectedEmployeeResponse;
     @Mock
     private EmployeeMapper employeeMapper;
+
 
     static private final Logger logger = LoggerFactory.getLogger(EmployeeServiceImplTest.class);
 
@@ -60,6 +68,7 @@ class EmployeeServiceImplTest {
                 salary(new BigDecimal("980000")).
                 status("Active").
                 build();
+
         // Setup test data directly
         validEmployee = Employee.builder()
                 .employeeId("E123490")
@@ -86,11 +95,19 @@ class EmployeeServiceImplTest {
         // Using BeanUtils.copyProperties to copy properties from EmployeeDto(EmployeeRequest) to Employee for the test.
         //  BeanUtils.copyProperties(employeeRequest, validEmployee);
 
+
+        // Using BeanUtils.copyProperties to copy properties from EmployeeDto(EmployeeRequest) to Employee for the test.
+        BeanUtils.copyProperties(employeeRequest, validEmployee);
+        when(employeeRepository.save(any(Employee.class))).thenReturn(validEmployee);
+
     }
 
     @Test
     void addEmployeeSuccessTest() {
+
         when(employeeRepository.save(any(Employee.class))).thenReturn(validEmployee);
+
+
         ResponseEntity<Employee> response = employeeService.addEmployee(employeeRequest);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
@@ -102,6 +119,7 @@ class EmployeeServiceImplTest {
 //        assertThat(responseBody).isNotNull();
 //        assertThat(responseBody.getEmployeeId()).isEqualTo(employeeRequest.getEmployeeId());
 //        verify(employeeRepository).save(any(Employee.class));
+
 
 
         //using assertJ to chain all the assertion
@@ -124,6 +142,9 @@ class EmployeeServiceImplTest {
 
 // Verify that the save method was called exactly once with any Employee object
         verify(employeeRepository).save(any(Employee.class));
+
+
+        //using assertJ to chain all the assertion
 
 
     }
@@ -192,5 +213,41 @@ class EmployeeServiceImplTest {
         verify(employeeRepository).findAll();
 
     }
+
+        Employee responseBody = response.getBody();
+        logger.info("response{}", responseBody);
+        assertThat(responseBody).
+                as("Check that the response body is not null and its fields match the expected values").
+                isNotNull().
+                satisfies(employee -> {
+                    assertThat(employee.getEmployeeId()).as("Check Employee ID").
+                            withFailMessage("Expected employeeId to be %s but was %s", employeeRequest.getEmployeeId(), employee.getEmployeeId()).
+                            isEqualTo(employeeRequest.getEmployeeId());
+                    assertThat(employee.getEmail()).as("Check employee Email").
+                            isEqualTo(employeeRequest.getEmail());
+                    assertThat(employee.getName()).as("Check employee Name:").isEqualTo(employeeRequest.getName());
+
+                });
+
+
+// Verify that the save method was called exactly once with any Employee object
+        verify(employeeRepository).save(any(Employee.class));
+
+
+    }
+
+    @AfterEach
+    void tearDown() {
+        // If you've used any mock objects, you might want to reset them
+        Mockito.reset(employeeRepository);
+
+        // If you inserted data into an in-memory database, you might want to remove it
+        //employeeRepository.deleteAll();
+
+        // Nullify the objects to ensure they're garbage collected
+        validEmployee = null;
+        employeeRequest = null;
+    }
+
 
 }
