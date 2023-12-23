@@ -7,7 +7,10 @@ import com.ems.employee_service.repository.EmployeeRepository;
 
 import com.ems.employee_service.service.mapper.EmployeeMapper;
 
-import com.fasterxml.jackson.databind.util.BeanUtil;
+import org.assertj.core.api.Condition;
+
+
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,11 +29,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-
 import java.math.BigDecimal;
 import java.util.List;
-
+import java.util.Optional;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
@@ -87,6 +88,7 @@ class EmployeeServiceImplTest {
                 .position("Developer")
                 .phoneNumber("+2547-0000-00")
                 .salary(new BigDecimal("980000"))
+//                .hireDate(LocalDate.now())
                 .status("Active")
                 .build();
 
@@ -214,40 +216,60 @@ class EmployeeServiceImplTest {
 
     }
 
-        Employee responseBody = response.getBody();
-        logger.info("response{}", responseBody);
-        assertThat(responseBody).
-                as("Check that the response body is not null and its fields match the expected values").
-                isNotNull().
-                satisfies(employee -> {
-                    assertThat(employee.getEmployeeId()).as("Check Employee ID").
-                            withFailMessage("Expected employeeId to be %s but was %s", employeeRequest.getEmployeeId(), employee.getEmployeeId()).
-                            isEqualTo(employeeRequest.getEmployeeId());
-                    assertThat(employee.getEmail()).as("Check employee Email").
-                            isEqualTo(employeeRequest.getEmail());
-                    assertThat(employee.getName()).as("Check employee Name:").isEqualTo(employeeRequest.getName());
 
-                });
+    //get employee by Id
+    @Test
+    void find_employee_by_id_should_return_success(){
+        //arrange
+
+        when(employeeRepository.findEmployeesByEmployeeId(validEmployee.getEmployeeId())).thenReturn(Optional.of(validEmployee));
 
 
-// Verify that the save method was called exactly once with any Employee object
-        verify(employeeRepository).save(any(Employee.class));
+        //act
+        Optional<EmployeeResponse>response = employeeService.getEmployeeById(validEmployee.getEmployeeId());
 
+        //assert
 
+        assertEquals(expectedEmployeeResponse, response.get());
+        assertTrue(response.isPresent());
+
+        // Advanced assertions
+        response.ifPresent(employee -> {
+            assertThat(employee).isEqualToComparingFieldByField(expectedEmployeeResponse);
+            // Numeric Assertions
+            assertThat(employee.getSalary()).as("Salary")
+                    .isNotNull()
+                    .isPositive()
+                    .isEqualByComparingTo(new BigDecimal("980000")); // Use isEqualByComparingTo for BigDecimal comparisons
+
+            // Date Assertions - if you have date fields
+//            assertThat(employee.getHireDate()).as("Hire Date")
+//            .isBeforeOrEqualTo(LocalDate.now());
+
+            // String Assertions - for more detailed string checks
+            assertThat(employee.getEmail()).as("Email format")
+                    .contains("@")
+                    .endsWith(".com");
+            // Custom Condition - for domain-specific rules or complex conditions
+            Condition<EmployeeResponse> activeStatusCondition = new Condition<>(
+                    emp -> "Active".equals(emp.getStatus()),
+                    "Employee is in active status"
+            );
+            assertThat(employee).as("Check active status").has(activeStatusCondition);
+
+        });
+        //verify Interaction
+
+        verify(employeeRepository).findEmployeesByEmployeeId(validEmployee.getEmployeeId());
     }
 
-    @AfterEach
-    void tearDown() {
-        // If you've used any mock objects, you might want to reset them
-        Mockito.reset(employeeRepository);
 
-        // If you inserted data into an in-memory database, you might want to remove it
-        //employeeRepository.deleteAll();
 
-        // Nullify the objects to ensure they're garbage collected
-        validEmployee = null;
-        employeeRequest = null;
-    }
+
+
 
 
 }
+
+
+
