@@ -4,8 +4,13 @@ import com.ems.employee_service.dto.request.EmployeeRequest;
 import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
 import com.ems.employee_service.repository.EmployeeRepository;
+
 import com.ems.employee_service.service.mapper.EmployeeMapper;
+
 import org.assertj.core.api.Condition;
+
+
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +21,8 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,9 +44,11 @@ class EmployeeServiceImplTest {
 
     private Employee validEmployee;
     private EmployeeRequest employeeRequest;
+
     private EmployeeResponse expectedEmployeeResponse;
     @Mock
     private EmployeeMapper employeeMapper;
+
 
     static private final Logger logger = LoggerFactory.getLogger(EmployeeServiceImplTest.class);
 
@@ -60,6 +69,7 @@ class EmployeeServiceImplTest {
                 salary(new BigDecimal("980000")).
                 status("Active").
                 build();
+
         // Setup test data directly
         validEmployee = Employee.builder()
                 .employeeId("E123490")
@@ -87,11 +97,19 @@ class EmployeeServiceImplTest {
         // Using BeanUtils.copyProperties to copy properties from EmployeeDto(EmployeeRequest) to Employee for the test.
         //  BeanUtils.copyProperties(employeeRequest, validEmployee);
 
+
+        // Using BeanUtils.copyProperties to copy properties from EmployeeDto(EmployeeRequest) to Employee for the test.
+        BeanUtils.copyProperties(employeeRequest, validEmployee);
+        when(employeeRepository.save(any(Employee.class))).thenReturn(validEmployee);
+
     }
 
     @Test
     void addEmployeeSuccessTest() {
+
         when(employeeRepository.save(any(Employee.class))).thenReturn(validEmployee);
+
+
         ResponseEntity<Employee> response = employeeService.addEmployee(employeeRequest);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
@@ -103,6 +121,7 @@ class EmployeeServiceImplTest {
 //        assertThat(responseBody).isNotNull();
 //        assertThat(responseBody.getEmployeeId()).isEqualTo(employeeRequest.getEmployeeId());
 //        verify(employeeRepository).save(any(Employee.class));
+
 
 
         //using assertJ to chain all the assertion
@@ -125,6 +144,9 @@ class EmployeeServiceImplTest {
 
 // Verify that the save method was called exactly once with any Employee object
         verify(employeeRepository).save(any(Employee.class));
+
+
+        //using assertJ to chain all the assertion
 
 
     }
@@ -194,6 +216,7 @@ class EmployeeServiceImplTest {
 
     }
 
+
     //get employee by Id
     @Test
     void find_employee_by_id_should_return_success(){
@@ -240,4 +263,5 @@ class EmployeeServiceImplTest {
         verify(employeeRepository).findEmployeesByEmployeeId(validEmployee.getEmployeeId());
     }
 
-}
+    }
+
