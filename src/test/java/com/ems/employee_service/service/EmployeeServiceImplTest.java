@@ -1,5 +1,6 @@
 package com.ems.employee_service.service;
 
+import com.ems.employee_service.customException.UserNotFoundException;
 import com.ems.employee_service.dto.request.EmployeeRequest;
 import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
@@ -264,9 +265,42 @@ class EmployeeServiceImplTest {
     }
 
 
+@Test
+void update_employee_should_return_success(){
+          //arrange
+        String employeeId = validEmployee.getEmployeeId();
+        when(employeeRepository.findEmployeesByEmployeeId(employeeId)).thenReturn(Optional.of(validEmployee));
+        when(employeeRepository.save(any(Employee.class))).thenReturn(validEmployee);
 
+        //act
+        ResponseEntity<EmployeeResponse> response = employeeService.updateEmployee(employeeRequest,employeeId);
 
+        //assert
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
 
+    //verify
+
+    verify(employeeRepository).findEmployeesByEmployeeId(employeeId);
+    verify(employeeRepository).save(any(Employee.class));
+
+}
+
+    @Test
+    void updateEmployee_EmployeeNotFound() {
+        // Arrange
+        String invalidEmployeeId = "E234580";
+        when(employeeRepository.findEmployeesByEmployeeId(invalidEmployeeId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        Exception exception = assertThrows(UserNotFoundException.class, () -> {
+            employeeService.updateEmployee(employeeRequest, invalidEmployeeId);
+        });
+
+        String expectedMessage = "Employee ID " + invalidEmployeeId + " not found. Please try with a valid ID.";
+        String actualMessage = exception.getMessage();
+        assertTrue(actualMessage.contains(expectedMessage));
+    }
 
 
 }
