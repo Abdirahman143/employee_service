@@ -1,5 +1,6 @@
 package com.ems.employee_service.service;
 
+import com.ems.employee_service.customException.UserNotFoundException;
 import com.ems.employee_service.dto.request.EmployeeRequest;
 import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
@@ -228,78 +229,6 @@ class EmployeeServiceImplTest {
         //act
         Optional<EmployeeResponse>response = employeeService.getEmployeeById(validEmployee.getEmployeeId());
 
-
-        //assert
-
-        assertEquals(expectedEmployeeResponse, response.get());
-        assertTrue(response.isPresent());
-
-        // Advanced assertions
-
-       response.ifPresent(employee -> {
-            assertThat(employee).isEqualToComparingFieldByField(expectedEmployeeResponse);
-           // Numeric Assertions
-           assertThat(employee.getSalary()).as("Salary")
-                   .isNotNull()
-                   .isPositive()
-                   .isEqualByComparingTo(new BigDecimal("980000")); // Use isEqualByComparingTo for BigDecimal comparisons
-
-           // Date Assertions - if you have date fields
-//            assertThat(employee.getHireDate()).as("Hire Date")
-//            .isBeforeOrEqualTo(LocalDate.now());
-
-           // String Assertions - for more detailed string checks
-           assertThat(employee.getEmail()).as("Email format")
-                   .contains("@")
-                   .endsWith(".com");
-           // Custom Condition - for domain-specific rules or complex conditions
-           Condition<EmployeeResponse> activeStatusCondition = new Condition<>(
-                   emp -> "Active".equals(emp.getStatus()),
-                   "Employee is in active status"
-           );
-           assertThat(employee).as("Check active status").has(activeStatusCondition);
-
-        response.ifPresent(employee -> {
-            assertThat(employee).isEqualToComparingFieldByField(expectedEmployeeResponse);
-            // Numeric Assertions
-            assertThat(employee.getSalary()).as("Salary")
-                    .isNotNull()
-                    .isPositive()
-                    .isEqualByComparingTo(new BigDecimal("980000")); // Use isEqualByComparingTo for BigDecimal comparisons
-
-            // Date Assertions - if you have date fields
-//            assertThat(employee.getHireDate()).as("Hire Date")
-//            .isBeforeOrEqualTo(LocalDate.now());
-
-            // String Assertions - for more detailed string checks
-            assertThat(employee.getEmail()).as("Email format")
-                    .contains("@")
-                    .endsWith(".com");
-            // Custom Condition - for domain-specific rules or complex conditions
-            Condition<EmployeeResponse> activeStatusCondition = new Condition<>(
-                    emp -> "Active".equals(emp.getStatus()),
-                    "Employee is in active status"
-            );
-            assertThat(employee).as("Check active status").has(activeStatusCondition);
-
-
-        });
-        //verify Interaction
-
-        verify(employeeRepository).findEmployeesByEmployeeId(validEmployee.getEmployeeId());
-    }
-
-
-    }
-
-
-
-
-
-
-
-
-
         //assert
 
         assertEquals(expectedEmployeeResponse, response.get());
@@ -336,10 +265,42 @@ class EmployeeServiceImplTest {
     }
 
 
+@Test
+void update_employee_should_return_success(){
+          //arrange
+        String employeeId = validEmployee.getEmployeeId();
+        when(employeeRepository.findEmployeesByEmployeeId(employeeId)).thenReturn(Optional.of(validEmployee));
+        when(employeeRepository.save(any(Employee.class))).thenReturn(validEmployee);
 
+        //act
+        ResponseEntity<EmployeeResponse> response = employeeService.updateEmployee(employeeRequest,employeeId);
 
+        //assert
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
 
+    //verify
 
+    verify(employeeRepository).findEmployeesByEmployeeId(employeeId);
+    verify(employeeRepository).save(any(Employee.class));
+
+}
+
+    @Test
+    void updateEmployee_EmployeeNotFound() {
+        // Arrange
+        String invalidEmployeeId = "E234580";
+        when(employeeRepository.findEmployeesByEmployeeId(invalidEmployeeId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        Exception exception = assertThrows(UserNotFoundException.class, () -> {
+            employeeService.updateEmployee(employeeRequest, invalidEmployeeId);
+        });
+
+        String expectedMessage = "Employee ID " + invalidEmployeeId + " not found. Please try with a valid ID.";
+        String actualMessage = exception.getMessage();
+        assertTrue(actualMessage.contains(expectedMessage));
+    }
 
 
 }
