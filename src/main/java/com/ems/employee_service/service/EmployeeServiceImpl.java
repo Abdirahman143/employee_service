@@ -126,6 +126,4 @@ public Optional<EmployeeResponse> getEmployeeById(String empId) throws UserNotFo
 
         return new ResponseEntity<>(employeeResponse, HttpStatus.OK);
     }
-
-
 }
