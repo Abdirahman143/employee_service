@@ -1,6 +1,7 @@
 package com.ems.employee_service.service;
 
 import com.ems.employee_service.customException.UserNotFoundException;
+import com.ems.employee_service.dto.request.EmployeePartialUpdateRequest;
 import com.ems.employee_service.dto.request.EmployeeRequest;
 import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
@@ -25,16 +26,16 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpStatus;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import org.springframework.http.ResponseEntity;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+
 @ExtendWith(MockitoExtension.class)
 class EmployeeServiceImplTest {
 
@@ -49,7 +50,7 @@ class EmployeeServiceImplTest {
     private EmployeeResponse expectedEmployeeResponse;
     @Mock
     private EmployeeMapper employeeMapper;
-
+    private EmployeePartialUpdateRequest updateRequest;
 
     static private final Logger logger = LoggerFactory.getLogger(EmployeeServiceImplTest.class);
 
@@ -100,8 +101,9 @@ class EmployeeServiceImplTest {
 
 
         // Using BeanUtils.copyProperties to copy properties from EmployeeDto(EmployeeRequest) to Employee for the test.
-        BeanUtils.copyProperties(employeeRequest, validEmployee);
-        when(employeeRepository.save(any(Employee.class))).thenReturn(validEmployee);
+//        BeanUtils.copyProperties(employeeRequest, validEmployee);
+//        when(employeeRepository.save(any(Employee.class))).thenReturn(validEmployee);
+        updateRequest = new EmployeePartialUpdateRequest();
 
     }
 
@@ -300,6 +302,47 @@ void update_employee_should_return_success(){
         String expectedMessage = "Employee ID " + invalidEmployeeId + " not found. Please try with a valid ID.";
         String actualMessage = exception.getMessage();
         assertTrue(actualMessage.contains(expectedMessage));
+    }
+
+    @Test
+    void updateEmployeePartial_Success() {
+        // Arrange
+        String employeeId =validEmployee.getEmployeeId();
+        updateRequest.setEmail("newemail@example.com");
+        updateRequest.setSalary(new BigDecimal("120000"));
+        when(employeeRepository.findEmployeesByEmployeeId(employeeId)).thenReturn(Optional.of(validEmployee));
+        when(employeeRepository.save(any(Employee.class))).thenReturn(validEmployee);
+        // Act
+        ResponseEntity<EmployeeResponse> response = employeeService.updateEmployeePartial(updateRequest, employeeId);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+
+        //verify
+        verify(employeeRepository).findEmployeesByEmployeeId(employeeId);
+        verify(employeeRepository).save(any(Employee.class));
+    }
+
+
+    @Test
+    void updateEmployeePartial_EmployeeNotFound() {
+        // Arrange
+        String invalidEmployeeId = "nonExistingId";
+        when(employeeRepository.findEmployeesByEmployeeId(invalidEmployeeId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        Exception exception = assertThrows(UserNotFoundException.class, () -> {
+            employeeService.updateEmployeePartial(updateRequest, invalidEmployeeId);
+        });
+
+        String expectedMessage = "Employee ID " + invalidEmployeeId + " not found. Please try with a valid ID.";
+        String actualMessage = exception.getMessage();
+        assertTrue(actualMessage.contains(expectedMessage));
+
+        //verify
+
+        verify(employeeRepository, never()).save(any(Employee.class));
     }
 
 
