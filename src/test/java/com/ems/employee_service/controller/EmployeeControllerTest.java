@@ -6,8 +6,7 @@ import com.ems.employee_service.entity.Employee;
 import com.ems.employee_service.service.EmployeeService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -31,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 @ExtendWith(MockitoExtension.class)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class EmployeeControllerTest {
 
     @Mock
@@ -88,6 +88,8 @@ class EmployeeControllerTest {
     }
 
     @Test
+    @Order(1)
+    @DisplayName("Verify Add employee should return success")
     void addEmployeeTest() throws Exception {
         String validRequestJson = objectMapper.writeValueAsString(employeeRequest);
         when(employeeService.addEmployee(any(EmployeeRequest.class))).thenReturn(ResponseEntity.ok(employee));
@@ -101,6 +103,8 @@ class EmployeeControllerTest {
     }
 
     @Test
+    @Order(2)
+    @DisplayName("Verify Add employee with empty fields should throw an errors")
     void addEmployeeWithEmptyFieldsTest() throws RuntimeException,Exception {
         //arrange
         //arrange
@@ -127,8 +131,8 @@ class EmployeeControllerTest {
               andExpect(jsonPath("$.errors").isArray()).
               andExpect(jsonPath("$.errors",hasSize(3))).
               andExpect(jsonPath("$.errors[0]").value("employeeRequest : Name is required")).
-              andExpect(jsonPath("$.errors[1]").value("employeeRequest : Email is required")).
-              andExpect(jsonPath("$.errors[2]").value("employeeRequest : Employee ID is required")).
+              andExpect(jsonPath("$.errors[1]").value("employeeRequest : Employee ID is required")).
+              andExpect(jsonPath("$.errors[2]").value("employeeRequest : Email is required")).
               andDo(print());
 
 
@@ -139,6 +143,8 @@ class EmployeeControllerTest {
 
 
     @Test
+    @Order(3)
+    @DisplayName("Verify Add employee duplicate fields should thrown errors")
     void addEmployeeWithDuplicateEmployeeIDAndEmail() throws Exception {
         //arrange
         EmployeeRequest duplicateRequest = new EmployeeRequest();
