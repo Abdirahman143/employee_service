@@ -2,6 +2,7 @@ package com.ems.employee_service.controller;
 
 import com.ems.employee_service.customException.CustomizedExceptionHandler;
 import com.ems.employee_service.dto.request.EmployeeRequest;
+import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
 import com.ems.employee_service.service.EmployeeService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -12,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
@@ -20,11 +22,14 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -42,6 +47,7 @@ class EmployeeControllerTest {
     private MockMvc mockMvc;
     private EmployeeRequest employeeRequest;
     private Employee employee;
+    private EmployeeResponse employeeResponse;
 
     private ObjectMapper objectMapper;
 
@@ -195,6 +201,60 @@ class EmployeeControllerTest {
     }
 
 
+    @Test
+    @DisplayName("verify get all employee should return success")
+    @Order(4)
+    void getAllEmployeeShouldReturnSuccess() throws Exception {
+        // Arrange
+        List<EmployeeResponse> employeeResponses = createTestEmployeeResponses();
+        ResponseEntity<List<EmployeeResponse>> expectedResponse = new ResponseEntity<>(employeeResponses, HttpStatus.OK);
+        when(employeeService.getAllEmployee()).thenReturn(expectedResponse);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/employee")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(employeeResponses.size())))
+                .andExpect(jsonPath("$[0].employeeId").value(employeeResponses.get(0).getEmployeeId()))
+                .andDo(print());
+
+
+        //verify the interaction
+        verify(employeeService).getAllEmployee();
+    }
+
+    // Helper method to create a list of EmployeeResponse objects
+    private List<EmployeeResponse> createTestEmployeeResponses() {
+        return List.of(
+                EmployeeResponse.builder()
+                        .employeeId("E123491")
+                        .email("ahmed.abdi@test.com")
+                        .name("Ahmed")
+                        .position("Developer")
+                        .phoneNumber("+2547-0000-00")
+                        .salary(new BigDecimal("70000"))
+                        .status("Active")
+                        .build(),
+                EmployeeResponse.builder()
+                        .employeeId("E123492")
+                        .email("bashir.abdi@test.com")
+                        .name("Bashir")
+                        .position("Developer")
+                        .phoneNumber("+2547-0000-00")
+                        .salary(new BigDecimal("80000"))
+                        .status("Active")
+                        .build(),
+                EmployeeResponse.builder()
+                        .employeeId("E123495")
+                        .email("fatima.abdi@test.com")
+                        .name("Fatima")
+                        .position("QA")
+                        .phoneNumber("+2547-0040-00")
+                        .salary(new BigDecimal("90000"))
+                        .status("Active")
+                        .build()
+        );
+    }
 
 
 }
