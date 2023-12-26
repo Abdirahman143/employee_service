@@ -1,6 +1,7 @@
 package com.ems.employee_service.controller;
 
 import com.ems.employee_service.customException.CustomizedExceptionHandler;
+import com.ems.employee_service.customException.UserNotFoundException;
 import com.ems.employee_service.dto.request.EmployeeRequest;
 import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
@@ -278,7 +279,27 @@ class EmployeeControllerTest {
     }
 
 
+    @Test
+    @Order(5)
+    @DisplayName("verify find employee by wrong Id should not return success ")
+    void find_employee_by_wrong_id_should_not_return_success() throws Exception {
+        String wrongId = "E12398";
+        String expectedMessage = "Employee ID "+wrongId+" not found. Please try with a valid ID.";
 
+        // Mock the service to throw an exception for the wrong ID
+        when(employeeService.getEmployeeById(wrongId)).thenThrow(new UserNotFoundException(expectedMessage));
+
+        // Perform the request and expect a 404 status with the correct error message
+        mockMvc.perform(get("/api/v1/employee/{id}", wrongId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Resource Not Found"))
+                .andExpect(jsonPath("$.errors[0]").value(expectedMessage))
+                .andDo(print());
+
+        // Verify the service was called with the wrong ID
+        verify(employeeService).getEmployeeById(wrongId);
+    }
 
 
 }
