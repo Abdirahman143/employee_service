@@ -256,5 +256,29 @@ class EmployeeControllerTest {
         );
     }
 
+    @Test
+    @Order(5)
+    @DisplayName("verify find employee by Id should return success ")
+    void find_employee_by_id_should_return_success() throws Exception {
+        String employeeId = createTestEmployeeResponses().get(0).getEmployeeId();
+        when(employeeService.getEmployeeById(employeeId)).thenReturn(Optional.of(createTestEmployeeResponses().get(0)));
+
+        //act and assert
+        mockMvc.perform(get("/api/v1/employee/{id}",employeeId).
+                contentType(MediaType.APPLICATION_JSON)).
+                andExpect(status().isOk()).
+                andExpect(jsonPath("$.employeeId").value(createTestEmployeeResponses().get(0).getEmployeeId())).
+                andExpect(jsonPath("$.email").value(createTestEmployeeResponses().get(0).getEmail())).
+                andDo(print());
+
+
+        //verify the interaction
+        verify(employeeService).getEmployeeById(employeeId);
+
+    }
+
+
+
+
 
 }
