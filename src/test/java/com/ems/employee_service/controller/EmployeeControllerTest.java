@@ -4,6 +4,7 @@ import com.ems.employee_service.customException.CustomizedExceptionHandler;
 import com.ems.employee_service.dto.request.EmployeeRequest;
 import com.ems.employee_service.entity.Employee;
 import com.ems.employee_service.service.EmployeeService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
@@ -101,6 +103,7 @@ class EmployeeControllerTest {
     @Test
     void addEmployeeWithEmptyFieldsTest() throws RuntimeException,Exception {
         //arrange
+        //arrange
         EmployeeRequest emptyRequest = new EmployeeRequest();
         emptyRequest.setEmployeeId("");
         emptyRequest.setEmail("");
@@ -108,7 +111,7 @@ class EmployeeControllerTest {
         emptyRequest.setSalary(new BigDecimal("89000"));
         emptyRequest.setPosition("Developer");
         emptyRequest.setPhoneNumber("+2547-0034-4532");
-
+        emptyRequest.setStatus("Active");
         String invalidJsonRequest = objectMapper.writeValueAsString(emptyRequest);
 
 
@@ -135,6 +138,55 @@ class EmployeeControllerTest {
     }
 
 
+    @Test
+    void addEmployeeWithDuplicateEmployeeIDAndEmail() throws Exception {
+        //arrange
+        EmployeeRequest duplicateRequest = new EmployeeRequest();
+        duplicateRequest.setEmployeeId("E12345");
+        duplicateRequest.setName("John Doe");
+        duplicateRequest.setEmail("john.doe@example.com");
+        duplicateRequest.setPosition("Developer");
+        duplicateRequest.setPhoneNumber("123-456-7890");
+        duplicateRequest.setSalary(new BigDecimal("75000.00"));
+        duplicateRequest.setStatus("Active");
+
+        //converting to string
+        String validEmployeeRequestJson = objectMapper.writeValueAsString(employeeRequest);
+        String duplicateJsonRequest = objectMapper.writeValueAsString(duplicateRequest);
+
+        // Act & Assert for the first valid request
+        when(employeeService.addEmployee(any(EmployeeRequest.class))).thenReturn(ResponseEntity.ok(employee));
+        mockMvc.perform(post("/api/v1/employee").
+        contentType(MediaType.APPLICATION_JSON).
+        content(validEmployeeRequestJson)).
+                andExpect(status().isOk()).
+                andDo(print());
+
+        // Verify the interaction for the first valid request
+        verify(employeeService).addEmployee(any(EmployeeRequest.class));
+
+
+        //adding duplicate
+        // Simulate a duplicate entry scenario
+
+        when(employeeService.addEmployee(any(EmployeeRequest.class)))
+                .thenThrow(new DataIntegrityViolationException("Duplicate entry for employeeId or email"));
+
+        // Act & Assert for the duplicate request
+
+        mockMvc.perform(post("/api/v1/employee").
+                contentType(MediaType.APPLICATION_JSON).
+                content(duplicateJsonRequest)).
+                andExpect(jsonPath("$.message").value("Data Integrity Error")).
+                andExpect(jsonPath("$.errors[0]").value("Operation cannot be performed due to a data integrity violation.")).
+                andDo(print());
+
+
+        // Verify that the service method was indeed called with the duplicate request
+        verify(employeeService, times(2)).addEmployee(any(EmployeeRequest.class));
+
+
+    }
 
 
 
