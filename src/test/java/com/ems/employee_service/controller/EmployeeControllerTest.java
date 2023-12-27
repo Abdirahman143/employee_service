@@ -353,4 +353,31 @@ class EmployeeControllerTest {
     }
 
 
+    //update employee with wrong employeeId should throw an error
+    @Test
+    @Order(7)
+    @DisplayName("verify update employee with wrong Id should throw an error")
+    void updateEmployeeWithWrongEmployeeIdShouldThrowError() throws Exception {
+        //arrange
+        String wrongEmployeeId = "E123981";
+        String jsonRequest = objectMapper.writeValueAsString(employeeRequest);
+        //act and assert
+        String expectedMessage = "Employee ID "+wrongEmployeeId+" not found. Please try with a valid ID.";
+        when(employeeService.updateEmployee(any(EmployeeRequest.class),eq(wrongEmployeeId))).
+                thenThrow(new UserNotFoundException(expectedMessage));
+        mockMvc.perform(put("/api/v1/employee/{id}",wrongEmployeeId).
+                contentType(MediaType.APPLICATION_JSON).
+                content(jsonRequest)).
+               andExpect(status().isNotFound()).
+                andExpect(jsonPath("$.message").value("Resource Not Found")).
+                andExpect(jsonPath("$.errors[0]").value(expectedMessage)).
+                andDo(print());
+
+        //verify the interaction
+
+        verify(employeeService,times(1)).updateEmployee(any(EmployeeRequest.class),eq(wrongEmployeeId));
+
+
+    }
+
 }
