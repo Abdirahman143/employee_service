@@ -2,6 +2,7 @@ package com.ems.employee_service.controller;
 
 import com.ems.employee_service.customException.CustomizedExceptionHandler;
 import com.ems.employee_service.customException.UserNotFoundException;
+import com.ems.employee_service.dto.request.EmployeePartialUpdateRequest;
 import com.ems.employee_service.dto.request.EmployeeRequest;
 import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
@@ -51,6 +52,7 @@ class EmployeeControllerTest {
     private EmployeeResponse employeeResponse;
 
     private ObjectMapper objectMapper;
+    EmployeePartialUpdateRequest employeePartialUpdateRequest;
 
     @BeforeEach
     void setUp() {
@@ -377,6 +379,45 @@ class EmployeeControllerTest {
 
         verify(employeeService,times(1)).updateEmployee(any(EmployeeRequest.class),eq(wrongEmployeeId));
 
+
+    }
+//update employee details partially --->update email and salary
+
+    @Test
+    @Order(7)
+    @DisplayName("verify updates only employee email or salary with correct employee should return success")
+    void whenUpdatingEmailOrSalary_WithCorrectEmployeeId_ShouldReturnSuccess() throws Exception {
+        // Arrange
+        //get employee id from EmployeeResponse list method
+        String employeeId = createTestEmployeeResponses().get(0).getEmployeeId();
+
+        EmployeePartialUpdateRequest employeePartialUpdateRequest =EmployeePartialUpdateRequest
+                .builder()
+                .email("madoobe.bashir@test.com")
+                .salary(new BigDecimal("125000"))
+                .build();
+
+        String updateJsonRequest = objectMapper.writeValueAsString(employeePartialUpdateRequest);
+
+        EmployeeResponse updatedEmployeeResponse = createTestEmployeeResponses().get(0);
+        updatedEmployeeResponse.setEmail(employeePartialUpdateRequest.getEmail());
+        updatedEmployeeResponse.setSalary(employeePartialUpdateRequest.getSalary());
+
+        when(employeeService.updateEmployeePartial(any(EmployeePartialUpdateRequest.class),eq(employeeId))).
+                thenReturn(new ResponseEntity<>(updatedEmployeeResponse,HttpStatus.OK));
+
+        //act and assert
+        mockMvc.perform(patch("/api/v1/employee/{id}",employeeId).
+                contentType(MediaType.APPLICATION_JSON).content(updateJsonRequest)).
+                andExpect(status().isOk()).
+                andExpect(jsonPath("$.email").value(updatedEmployeeResponse.getEmail())).
+                andExpect(jsonPath("$.salary").value(updatedEmployeeResponse.getSalary())).
+                andDo(print());
+
+
+        //verify the interaction
+
+        verify(employeeService).updateEmployeePartial(refEq(employeePartialUpdateRequest),eq(employeeId));
 
     }
 
