@@ -2,6 +2,7 @@ package com.ems.employee_service.controller;
 
 import com.ems.employee_service.customException.CustomizedExceptionHandler;
 import com.ems.employee_service.customException.UserNotFoundException;
+import com.ems.employee_service.dto.request.EmployeePartialUpdateRequest;
 import com.ems.employee_service.dto.request.EmployeeRequest;
 import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
@@ -51,6 +52,7 @@ class EmployeeControllerTest {
     private EmployeeResponse employeeResponse;
 
     private ObjectMapper objectMapper;
+    EmployeePartialUpdateRequest employeePartialUpdateRequest;
 
     @BeforeEach
     void setUp() {
@@ -352,5 +354,71 @@ class EmployeeControllerTest {
         verify(employeeService).updateEmployee(any(EmployeeRequest.class), eq(employeeId));
     }
 
+
+    //update employee with wrong employeeId should throw an error
+    @Test
+    @Order(7)
+    @DisplayName("verify update employee with wrong Id should throw an error")
+    void updateEmployeeWithWrongEmployeeIdShouldThrowError() throws Exception {
+        //arrange
+        String wrongEmployeeId = "E123981";
+        String jsonRequest = objectMapper.writeValueAsString(employeeRequest);
+        //act and assert
+        String expectedMessage = "Employee ID "+wrongEmployeeId+" not found. Please try with a valid ID.";
+        when(employeeService.updateEmployee(any(EmployeeRequest.class),eq(wrongEmployeeId))).
+                thenThrow(new UserNotFoundException(expectedMessage));
+        mockMvc.perform(put("/api/v1/employee/{id}",wrongEmployeeId).
+                contentType(MediaType.APPLICATION_JSON).
+                content(jsonRequest)).
+               andExpect(status().isNotFound()).
+                andExpect(jsonPath("$.message").value("Resource Not Found")).
+                andExpect(jsonPath("$.errors[0]").value(expectedMessage)).
+                andDo(print());
+
+        //verify the interaction
+
+        verify(employeeService,times(1)).updateEmployee(any(EmployeeRequest.class),eq(wrongEmployeeId));
+
+
+    }
+//update employee details partially --->update email and salary
+
+    @Test
+    @Order(7)
+    @DisplayName("verify updates only employee email or salary with correct employee should return success")
+    void whenUpdatingEmailOrSalary_WithCorrectEmployeeId_ShouldReturnSuccess() throws Exception {
+        // Arrange
+        //get employee id from EmployeeResponse list method
+        String employeeId = createTestEmployeeResponses().get(0).getEmployeeId();
+
+        EmployeePartialUpdateRequest employeePartialUpdateRequest =EmployeePartialUpdateRequest
+                .builder()
+                .email("madoobe.bashir@test.com")
+                .salary(new BigDecimal("125000"))
+                .build();
+
+        String updateJsonRequest = objectMapper.writeValueAsString(employeePartialUpdateRequest);
+
+        EmployeeResponse updatedEmployeeResponse = createTestEmployeeResponses().get(0);
+        updatedEmployeeResponse.setEmail(employeePartialUpdateRequest.getEmail());
+        updatedEmployeeResponse.setSalary(employeePartialUpdateRequest.getSalary());
+
+        when(employeeService.updateEmployeePartial(any(EmployeePartialUpdateRequest.class),eq(employeeId))).
+                thenReturn(new ResponseEntity<>(updatedEmployeeResponse,HttpStatus.OK));
+
+        //act and assert
+        mockMvc.perform(patch("/api/v1/employee/{id}",employeeId).
+                contentType(MediaType.APPLICATION_JSON).content(updateJsonRequest)).
+                andExpect(status().isOk()).
+                andExpect(jsonPath("$.email").value(updatedEmployeeResponse.getEmail())).
+                andExpect(jsonPath("$.salary").value(updatedEmployeeResponse.getSalary())).
+                andDo(print());
+
+
+        //verify the interaction
+
+        verify(employeeService).updateEmployeePartial(refEq(employeePartialUpdateRequest),eq(employeeId));
+
+    }
 
 }
