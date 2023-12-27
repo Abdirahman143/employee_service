@@ -421,4 +421,50 @@ class EmployeeControllerTest {
 
     }
 
+
+    ////update employee details partially --->update email and salary with wrong employee Id
+
+
+    @Test
+    @Order(7)
+    @DisplayName("verify updates only employee email or salary with wrong employee Id should Throw error")
+    void whenUpdatingEmailOrSalary_WithWrongEmployeeId_ShouldThrowError() throws Exception {
+        //arrange
+        String wrongEmployeeId = "12345";
+        EmployeePartialUpdateRequest employeePartialUpdateRequest =EmployeePartialUpdateRequest.
+                builder().
+                email("abdirahman.bashir@gmail.com").
+                salary(new BigDecimal("278000")).
+                build();
+        EmployeeResponse updateResponse = createTestEmployeeResponses().get(0);
+        updateResponse.setSalary(employeePartialUpdateRequest.getSalary());
+        updateResponse.setEmail(employeePartialUpdateRequest.getEmail());
+        String expectedMessage = "Employee ID "+wrongEmployeeId+" not found. Please try with a valid ID.";
+
+        String jsonEmployeeResponse = objectMapper.writeValueAsString(employeePartialUpdateRequest);
+
+        when(employeeService.updateEmployeePartial(any(EmployeePartialUpdateRequest.class),eq(wrongEmployeeId))).
+                thenThrow(new UserNotFoundException(expectedMessage));
+
+        //act and assert
+
+        mockMvc.perform(patch("/api/v1/employee/{id}",wrongEmployeeId).
+                contentType(MediaType.APPLICATION_JSON).
+                content(jsonEmployeeResponse)).
+                andExpect(status().isNotFound()).
+                andExpect(result -> assertTrue(result.getResolvedException() instanceof UserNotFoundException))
+                .andExpect(result -> assertEquals(expectedMessage, result.getResolvedException().getMessage()))
+                .andDo(print());
+
+        // Verify that no update was performed in the system
+        verify(employeeService, never()).addEmployee(any(EmployeeRequest.class));
+
+
+        //verify the interaction
+        verify(employeeService).updateEmployeePartial(any(EmployeePartialUpdateRequest.class),eq(wrongEmployeeId));
+
+
+
+
+    }
 }
