@@ -26,6 +26,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -137,10 +138,11 @@ class EmployeeControllerTest {
               andExpect(jsonPath("$.message").value("Validation Errors")).
               andExpect(jsonPath("$.errors").isArray()).
               andExpect(jsonPath("$.errors",hasSize(3))).
-              andExpect(jsonPath("$.errors[0]").value("employeeRequest : Name is required")).
-              andExpect(jsonPath("$.errors[1]").value("employeeRequest : Employee ID is required")).
-              andExpect(jsonPath("$.errors[2]").value("employeeRequest : Email is required")).
-              andDo(print());
+              andExpect(jsonPath("$.errors", containsInAnyOrder(
+                "employeeRequest : Name is required",
+                "employeeRequest : Employee ID is required",
+                "employeeRequest : Email is required")))
+                .andDo(print());
 
 
       //verify
