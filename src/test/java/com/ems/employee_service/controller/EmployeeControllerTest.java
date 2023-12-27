@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
@@ -34,8 +35,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 @ExtendWith(MockitoExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class EmployeeControllerTest {
@@ -385,45 +386,64 @@ class EmployeeControllerTest {
 
     @Test
     @Order(7)
-    @DisplayName("verify updates only employee email or salary with correct employee should return success")
+    @DisplayName("Verify that updating only employee email or salary with correct employee ID returns success")
     void whenUpdatingEmailOrSalary_WithCorrectEmployeeId_ShouldReturnSuccess() throws Exception {
         // Arrange
-        //get employee id from EmployeeResponse list method
         String employeeId = createTestEmployeeResponses().get(0).getEmployeeId();
-
-        EmployeePartialUpdateRequest employeePartialUpdateRequest =EmployeePartialUpdateRequest
-                .builder()
-                .email("madoobe.bashir@test.com")
-                .salary(new BigDecimal("125000"))
+        EmployeePartialUpdateRequest employeePartialUpdateRequest = EmployeePartialUpdateRequest.builder()
+                .email("madobe.madobe@test.com")
+                .salary(new BigDecimal("280000"))
                 .build();
-
         String updateJsonRequest = objectMapper.writeValueAsString(employeePartialUpdateRequest);
 
-        EmployeeResponse updatedEmployeeResponse = createTestEmployeeResponses().get(0);
-        updatedEmployeeResponse.setEmail(employeePartialUpdateRequest.getEmail());
-        updatedEmployeeResponse.setSalary(employeePartialUpdateRequest.getSalary());
+        EmployeeResponse originalEmployee = createTestEmployeeResponses().get(0);
+        EmployeeResponse updatedEmployee = EmployeeResponse.
+                builder().
+                employeeId(originalEmployee.getEmployeeId()).
+                name(originalEmployee.getName()).
+                email(employeePartialUpdateRequest.getEmail()).
+                salary(employeePartialUpdateRequest.getSalary()).
+                position(originalEmployee.getPosition()).
+                status(originalEmployee.getStatus()).
+                phoneNumber(originalEmployee.getPhoneNumber())
+                .build();
 
-        when(employeeService.updateEmployeePartial(any(EmployeePartialUpdateRequest.class),eq(employeeId))).
-                thenReturn(new ResponseEntity<>(updatedEmployeeResponse,HttpStatus.OK));
+        when(employeeService.updateEmployeePartial(any(EmployeePartialUpdateRequest.class), eq(employeeId)))
+                .thenReturn(new ResponseEntity<>(updatedEmployee, HttpStatus.OK));
 
-        //act and assert
-        mockMvc.perform(patch("/api/v1/employee/{id}",employeeId).
-                contentType(MediaType.APPLICATION_JSON).content(updateJsonRequest)).
-                andExpect(status().isOk()).
-                andExpect(jsonPath("$.email").value(updatedEmployeeResponse.getEmail())).
-                andExpect(jsonPath("$.salary").value(updatedEmployeeResponse.getSalary())).
-                andDo(print());
+        // Act
+        MvcResult result = mockMvc.perform(patch("/api/v1/employee/{id}", employeeId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateJsonRequest))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(updatedEmployee.getEmail()))
+                .andExpect(jsonPath("$.salary").value(updatedEmployee.getSalary().doubleValue()))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
 
+        // Assert
+        // Object Mapping Validation
+        EmployeeResponse responseBody = objectMapper.readValue(((MvcResult) result).getResponse().getContentAsString(), EmployeeResponse.class);
+        assertNotNull(responseBody, "The response body cannot be null.");
+        assertEquals(updatedEmployee.getEmail(), responseBody.getEmail(), "Email in response does not match the expected value.");
+        assertEquals(updatedEmployee.getSalary(), responseBody.getSalary(), "Salary in response does not match the expected value.");
 
-        //verify the interaction
+        // Cross-field Validation
+        assertEquals(originalEmployee.getEmployeeId(),responseBody.getEmployeeId(),"Employee Id should not change after the update");
+        assertEquals(originalEmployee.getName(), responseBody.getName(), "Name should not change after the update.");
+        assertEquals(originalEmployee.getPosition(), responseBody.getPosition(), "Position should not change after the update.");
+        assertEquals(originalEmployee.getPhoneNumber(), responseBody.getPhoneNumber(), "$.phoneNumber should not change after the update.");
+        assertEquals(originalEmployee.getHireDate(), responseBody.getHireDate(), "Hire date should not change after the update.");
 
-        verify(employeeService).updateEmployeePartial(refEq(employeePartialUpdateRequest),eq(employeeId));
+        // Header Validation
+        assertEquals(MediaType.APPLICATION_JSON.toString(), result.getResponse().getContentType(), "Content type should be JSON.");
 
+        // Verify the interaction
+        verify(employeeService).updateEmployeePartial(refEq(employeePartialUpdateRequest), eq(employeeId));
     }
 
 
     ////update employee details partially --->update email and salary with wrong employee Id
-
 
     @Test
     @Order(7)
