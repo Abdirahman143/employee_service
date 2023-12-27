@@ -31,8 +31,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -301,6 +300,56 @@ class EmployeeControllerTest {
 
         // Verify the service was called with the wrong ID
         verify(employeeService).getEmployeeById(wrongId);
+    }
+
+
+    @Test
+    @Order(6)
+    @DisplayName("verify update employee with correct employeeId should return success")
+    void updateEmployeeWithCorrectEmployeeIdShouldReturnSuccess() throws Exception {
+        // Arrange
+        String employeeId = "E12345";
+        EmployeeRequest updateEmployeeRequest = EmployeeRequest.builder()
+                .employeeId(employeeId)
+                .name("John Doe")
+                .email("john.doe@example.com")
+                .position("DevOps Engineer")
+                .phoneNumber("123-456-7890")
+                .salary(new BigDecimal("85000.00"))
+                .status("Active")
+                .build();
+
+        EmployeeResponse expectedEmployeeResponse = EmployeeResponse.builder()
+                .employeeId(employeeId)
+                .name("John Doe")
+                .email("john.doe@example.com")
+                .position("DevOps Engineer")
+                .phoneNumber("123-456-7890")
+                .salary(new BigDecimal("85000.00"))
+                .status("Active")
+                .build();
+
+        when(employeeService.updateEmployee(any(EmployeeRequest.class),eq(employeeId))).
+                thenReturn(new ResponseEntity<>(expectedEmployeeResponse,HttpStatus.OK));
+
+        String requestJson = objectMapper.writeValueAsString(updateEmployeeRequest);
+
+        // Act & Assert
+        mockMvc.perform(put("/api/v1/employee/{id}", employeeId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andExpect(jsonPath("$.employeeId").value(expectedEmployeeResponse.getEmployeeId()))
+                .andExpect(jsonPath("$.name").value(expectedEmployeeResponse.getName()))
+                .andExpect(jsonPath("$.email").value(expectedEmployeeResponse.getEmail()))
+                .andExpect(jsonPath("$.position").value(expectedEmployeeResponse.getPosition()))
+                .andExpect(jsonPath("$.phoneNumber").value(expectedEmployeeResponse.getPhoneNumber()))
+                .andExpect(jsonPath("$.salary").value(expectedEmployeeResponse.getSalary().doubleValue()))
+                .andExpect(jsonPath("$.status").value(expectedEmployeeResponse.getStatus()));
+
+        // Verify the interaction
+        verify(employeeService).updateEmployee(any(EmployeeRequest.class), eq(employeeId));
     }
 
 
