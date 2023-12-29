@@ -6,9 +6,14 @@ import com.ems.employee_service.dto.request.EmployeeRequest;
 import com.ems.employee_service.dto.response.EmployeeResponse;
 import com.ems.employee_service.entity.Employee;
 import com.ems.employee_service.service.EmployeeService;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +28,15 @@ public class EmployeeController {
         this.employeeService = employeeService;
     }
 
+    //Add employee
     @PostMapping()
+    @Operation(summary = "Add a new employee")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Employee created",
+                    content = { @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = EmployeeResponse.class)) }),
+            @ApiResponse(responseCode = "400", description = "Invalid input")
+    })
     ResponseEntity<Employee>addEmployee(@Valid @RequestBody EmployeeRequest employeeRequest){
        return employeeService.addEmployee(employeeRequest);
     }
