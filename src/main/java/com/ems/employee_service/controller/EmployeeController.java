@@ -48,6 +48,11 @@ public class EmployeeController {
         return  employeeService.getAllEmployee();
     }
 
+    //checking for content negotiation api versioning
+    @GetMapping(produces = "application/vnd.cbc.app-v2+json")
+    ResponseEntity<List<EmployeeResponse>>getAllEmployeeV2(){
+        return  employeeService.getAllEmployee();
+    }
     @GetMapping("/{employeeId}")
     Optional<EmployeeResponse>getEmployeeByEmployeeId(@PathVariable(value = "employeeId")
                                                       String employeeId) throws UserNotFoundException {
