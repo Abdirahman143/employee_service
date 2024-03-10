@@ -17,13 +17,10 @@ import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-
 import java.math.BigDecimal;
-
 import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hibernate.internal.CoreLogging.logger;
+
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
