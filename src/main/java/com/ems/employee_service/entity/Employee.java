@@ -34,6 +34,7 @@ public class Employee {
     @Column(unique = true)
     private String employeeId;
     @NotBlank(message ="Name is required!")
+    @Column(name = "employee_name")
     private String name;
     @NotBlank(message = "Email cannot be empty")
     @Pattern(regexp = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$",
